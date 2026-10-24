@@ -17,7 +17,8 @@ def test_full_conversation_flow():
 
     result = orchestrator.handle("Olá, Wattson")
 
-    assert result == "Wattson recebeu: Olá, Wattson"
+    assert result.startswith("Wattson recebeu: Você é Wattson")
+    assert "Usuário: Olá, Wattson" in result
     assert "Olá, Wattson" in context.messages
 
 
@@ -40,8 +41,9 @@ def test_conversation_preserves_history():
     orchestrator.handle("Qual é o meu nome?")
 
     assert len(provider.prompts) == 2
-    assert "Meu nome é A.RISE." in provider.prompts[1]
-    assert "Qual é o meu nome?" in provider.prompts[1]
+    assert "Usuário: Meu nome é A.RISE." in provider.prompts[1]
+    assert "Wattson: resposta" in provider.prompts[1]
+    assert "Usuário: Qual é o meu nome?" in provider.prompts[1]
 
 
 def test_conversation_sessions_are_independent():
@@ -51,18 +53,14 @@ def test_conversation_sessions_are_independent():
 
     provider = FakeProvider()
     engine = AIEngine(provider)
-
     first_context = ConversationContext()
     second_context = ConversationContext()
-
     first_conversation = ConversationAI(engine, first_context)
     second_conversation = ConversationAI(engine, second_context)
-
     first_orchestrator = Orchestrator(first_conversation)
     second_orchestrator = Orchestrator(second_conversation)
 
     first_orchestrator.handle("Segredo da primeira sessão.")
-
     second_orchestrator.handle("Mensagem da segunda sessão.")
 
     assert "Segredo da primeira sessão." in first_context.messages
@@ -77,13 +75,10 @@ def test_closed_session_rejects_conversation_message():
         def generate(self, prompt: str) -> str:
             return "resposta"
 
-    provider = FakeProvider()
-    engine = AIEngine(provider)
-
+    engine = AIEngine(FakeProvider())
     session = Session()
     conversation = ConversationAI(engine, session.context)
     orchestrator = Orchestrator(conversation)
-
     session.close()
 
     try:

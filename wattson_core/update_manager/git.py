@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-import subprocess
+
+from wattson_core.executor.runner import run_command
 
 
 @dataclass(frozen=True)
@@ -14,19 +15,25 @@ class GitUpdateChecker:
         self.repository_path = repository_path
 
     def _run_git(self, *args: str) -> str:
-        result = subprocess.run(
+        result = run_command(
             ["git", *args],
             cwd=self.repository_path,
-            capture_output=True,
-            text=True,
-            check=True,
         )
+
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Git command failed: {result.stderr.strip()}"
+            )
 
         return result.stdout.strip()
 
     def fetch(self) -> None:
         self._run_git("fetch", "--quiet")
-
+    def pull_ff_only(self) -> None:
+        self._run_git(
+            "pull",
+            "--ff-only",
+        )
     def current_commit(self) -> str:
         return self._run_git("rev-parse", "HEAD")
 
@@ -53,4 +60,10 @@ class GitUpdateChecker:
             current_commit=current,
             target_commit=target,
             update_available=current != target,
+        )
+
+    def pull_ff_only(self) -> None:
+        self._run_git(
+            "pull",
+            "--ff-only",
         )

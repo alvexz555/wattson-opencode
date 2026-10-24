@@ -6,13 +6,15 @@ from wattson_core.core.orchestrator import Orchestrator
 from wattson_core.diagnostics.adr0 import ADR0DiagnosticTool
 from wattson_core.search.contract import SearchTool
 from wattson_core.terminal import WattsonTerminal
+from wattson_core.update_manager.git import GitUpdateChecker
+from wattson_core.update_manager.health import PostUpdateHealthChecker
 
 
 def create_wattson():
-    provider_module = registry.load("ollama")
+    provider_module = registry.load()
 
     if provider_module is None:
-        raise RuntimeError("Provider Ollama indisponível.")
+        raise RuntimeError("Provider configurado indisponível. Verifique WATTSON_PROVIDER.")
 
     provider = provider_module.WattsonProvider()
 
@@ -22,11 +24,15 @@ def create_wattson():
 
     diagnostic_tool = ADR0DiagnosticTool(".")
     search_tool = SearchTool()
+    git_update_checker = GitUpdateChecker(".")
+    post_update_health_checker = PostUpdateHealthChecker(".")
 
     orchestrator = Orchestrator(
         conversation,
         diagnostic_tool=diagnostic_tool,
         search_tool=search_tool,
+        git_update_checker=git_update_checker,
+        post_update_health_checker=post_update_health_checker,
     )
 
     return WattsonTerminal(orchestrator)

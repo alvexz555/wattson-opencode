@@ -27,7 +27,7 @@ def test_wattson_provider_generates_response(monkeypatch):
         fake_post,
     )
 
-    provider = WattsonProvider()
+    provider = WattsonProvider(model="dolphin-llama3:8b")
 
     result = provider.generate("Olá, Wattson")
 

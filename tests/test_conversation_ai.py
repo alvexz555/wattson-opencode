@@ -11,12 +11,12 @@ class FakeProvider:
 def test_conversation_ai_generates_response():
     engine = AIEngine(FakeProvider())
     context = ConversationContext()
-
     conversation = ConversationAI(engine, context)
 
     result = conversation.respond("Olá, Wattson")
 
-    assert result == "resposta: Olá, Wattson"
+    assert result.startswith("resposta: Você é Wattson")
+    assert "Usuário: Olá, Wattson" in result
 
 
 def test_conversation_ai_uses_ai_engine():
@@ -30,10 +30,11 @@ def test_conversation_ai_uses_ai_engine():
 
     engine = SpyEngine()
     context = ConversationContext()
-
     conversation = ConversationAI(engine, context)
 
     result = conversation.respond("Teste de integração")
 
-    assert engine.received_message == "Teste de integração"
+    assert "Teste de integração" in engine.received_message
+    assert "Instruções:" in engine.received_message
+    assert "não inventar informações" in engine.received_message
     assert result == "resposta do engine"
