@@ -17,6 +17,26 @@ python -m wattson_core.adr0 --list-rules
 Código de saída: `0` ok · `1` achado com severidade ≥ `--fail-on` (padrão `high`) ·
 `2` diagnóstico incompleto (regra com erro ou projeto não encontrado).
 
+## Integração com OpenBot (MCP)
+
+O Wattson pode ser usado como servidor MCP (stdio) pelo OpenBot, sem dependências
+extras. O processo fala JSON-RPC 2.0 por linha e expõe:
+
+| Ferramenta | O que faz |
+|---|---|
+| `wattson_chat` | Envia uma mensagem ao cérebro do Wattson (conversa, diagnóstico, busca ou `opencode:`). |
+| `wattson_diagnose` | Roda a autoavaliação ADR0 e devolve o relatório formatado. |
+
+```bash
+python -m wattson_core.mcp_server   # fica ouvindo no stdin/stdout
+```
+
+No OpenBot, cadastre o servidor em MCP com transporte `stdio`, comando
+`<caminho>/.venv/bin/python`, argumentos `-m wattson_core.mcp_server` e diretório
+de trabalho na raiz do projeto. As ferramentas aparecem para os agentes no turno
+seguinte. O servidor não imprime nada no stdout além das respostas do protocolo;
+erros de ferramenta voltam como `isError` em vez de derrubar o processo.
+
 ## Testes
 
 ```bash

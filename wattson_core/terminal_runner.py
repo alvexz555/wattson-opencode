@@ -11,7 +11,7 @@ from wattson_core.update_manager.git import GitUpdateChecker
 from wattson_core.update_manager.health import PostUpdateHealthChecker
 
 
-def create_wattson():
+def create_orchestrator():
     provider_module = registry.load()
 
     if provider_module is None:
@@ -38,7 +38,11 @@ def create_wattson():
         opencode_tool=opencode_tool,
     )
 
-    return WattsonTerminal(orchestrator)
+    return orchestrator
+
+
+def create_wattson():
+    return WattsonTerminal(create_orchestrator())
 
 
 def run():
