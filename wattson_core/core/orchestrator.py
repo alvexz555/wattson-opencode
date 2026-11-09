@@ -1,3 +1,4 @@
+import re
 from wattson_core.diagnostics.formatter import DiagnosticFormatter
 from wattson_core.update_manager.post_update import PostUpdateValidator
 from wattson_core.update_manager.health import PostUpdateHealthChecker
@@ -12,10 +13,12 @@ class Orchestrator:
         search_tool=None,
         git_update_checker=None,
         post_update_health_checker=None,
+        opencode_tool=None,
     ):
         self.conversation = conversation
         self.diagnostic_tool = diagnostic_tool
         self.search_tool = search_tool
+        self.opencode_tool = opencode_tool
         self.git_update_checker = git_update_checker
         self.diagnostic_formatter = DiagnosticFormatter()
         self.post_update_validator = PostUpdateValidator()
@@ -26,6 +29,11 @@ class Orchestrator:
         self.last_update_report = None
 
     def handle(self, message: str) -> str:
+        if self._is_opencode_request(message):
+            return self.run_opencode_task(
+                self._extract_opencode_task(message)
+            )
+
         if self._is_update_confirmation(message):
             return self.confirm_update()
 
@@ -37,6 +45,9 @@ class Orchestrator:
             return self.diagnostic_formatter.format(diagnostic)
 
         if self._is_search_request(message):
+            if self.search_tool is None:
+                return self.conversation.respond(message)
+
             return self.run_search(message)
 
         return self.conversation.respond(message)
@@ -181,19 +192,32 @@ class Orchestrator:
         )
 
     def _is_search_request(self, message: str) -> bool:
-        keywords = (
-            "pesquise",
-            "pesquisa",
-            "procure",
-            "busque",
-        )
-
         message_lower = message.strip().lower()
 
-        return any(
-            message_lower.startswith(keyword)
-            for keyword in keywords
+        explicit_search_terms = (
+            "pesquise", "pesquisa", "pesquisar",
+            "procure", "procurar",
+            "busque", "buscar",
+            "na internet",
         )
+
+        factual_question_starters = (
+            "quem é ", "quem foi ",
+            "o que é ", "o que são ",
+            "onde fica ", "onde está ",
+            "quando aconteceu ",
+        )
+
+        has_search_term = any(
+            re.search(rf"\b{re.escape(term)}\b", message_lower)
+            for term in explicit_search_terms
+        )
+
+        is_factual_question = message_lower.startswith(
+            factual_question_starters
+        )
+
+        return has_search_term or is_factual_question
 
     def run_search(self, query: str):
         if self.search_tool is None:
@@ -247,3 +271,22 @@ class Orchestrator:
             )
 
         return self.diagnostic_tool.run()
+
+
+    def _is_opencode_request(self, message: str) -> bool:
+        return message.strip().lower().startswith("opencode:")
+
+    def _extract_opencode_task(self, message: str) -> str:
+        return message.strip().split(":", 1)[1].strip()
+
+    def run_opencode_task(self, task: str) -> str:
+        if not task:
+            return "Informe uma tarefa após 'opencode:'."
+
+        if self.opencode_tool is None:
+            return "OpenCode indisponível: ferramenta não configurada."
+
+        try:
+            return self.opencode_tool.run(task)
+        except (RuntimeError, ValueError, OSError) as exc:
+            return f"Falha controlada no OpenCode: {exc}"

@@ -1,4 +1,6 @@
 from wattson_core.ai.context import ConversationContext
+import pytest
+pytestmark = pytest.mark.integration
 from wattson_core.ai.conversation import ConversationAI
 from wattson_core.ai.engine import AIEngine
 from wattson_core.ai.providers.ollama import WattsonProvider
@@ -6,6 +8,10 @@ from wattson_core.core.orchestrator import Orchestrator
 
 
 def test_orchestrator_reaches_real_dolphin():
+    """Integração real com o Ollama: depende de infraestrutura local e do tempo de geração do modelo.
+
+    Marcada como 'integration' para a suíte padrão (pytest.ini: -m "not integration") ficar determinística.
+    """
     provider = WattsonProvider()
     engine = AIEngine(provider)
     context = ConversationContext()

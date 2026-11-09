@@ -4,6 +4,7 @@ from wattson_core.ai.engine import AIEngine
 from wattson_core.ai import registry
 from wattson_core.core.orchestrator import Orchestrator
 from wattson_core.diagnostics.adr0 import ADR0DiagnosticTool
+from wattson_core.executor.opencode_tool import OpenCodeTool
 from wattson_core.search.contract import SearchTool
 from wattson_core.terminal import WattsonTerminal
 from wattson_core.update_manager.git import GitUpdateChecker
@@ -26,6 +27,7 @@ def create_wattson():
     search_tool = SearchTool()
     git_update_checker = GitUpdateChecker(".")
     post_update_health_checker = PostUpdateHealthChecker(".")
+    opencode_tool = OpenCodeTool(project_root=".")
 
     orchestrator = Orchestrator(
         conversation,
@@ -33,6 +35,7 @@ def create_wattson():
         search_tool=search_tool,
         git_update_checker=git_update_checker,
         post_update_health_checker=post_update_health_checker,
+        opencode_tool=opencode_tool,
     )
 
     return WattsonTerminal(orchestrator)
